@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Food Delivery — Demo Frontend</title>
+  <style>
+    /* Simple, clean styles */
+    :root{
+      --accent:#ff6b35;
+      --muted:#6b7280;
+      --bg:#f7f7fb;
+      --card:#ffffff;
+      --shadow: 0 6px 18px rgba(31,41,55,0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:#111827;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    header{
+      background:linear-gradient(90deg,var(--card),#fff);
+      padding:18px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    header h1{margin:0;font-size:18px;letter-spacing:0.2px}
+    .container{max-width:1050px;margin:26px auto;padding:0 16px;}
+    .grid{display:grid;grid-template-columns: 320px 1fr 320px;gap:18px}
+    /* Left column */
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:var(--shadow)}
+    .small{font-size:13px;color:var(--muted)}
+    .btn{
+      background:var(--accent);color:white;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:600;
+      box-shadow: 0 6px 14px rgba(255,107,53,0.12)
+    }
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,0,0,0.06)}
+    .field{display:flex;flex-direction:column;margin-bottom:10px}
+    .field input, .field textarea, .field select{
+      padding:8px 10px;border-radius:8px;border:1px solid #e6e6ee;font-size:14px;background:#fff;
+    }
+    /* Restaurants list */
+    .list{display:flex;flex-direction:column;gap:10px}
+    .rest{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;border:1px solid #eef2ff}
+    .rest .meta{display:flex;flex-direction:column}
+    .rest h3{margin:0;font-size:15px}
+    .menu{display:grid;grid-template-columns:repeat(auto-fill, minmax(220px,1fr));gap:12px}
+    .menu-item{padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbff);border:1px solid #f1f5f9}
+    .menu-item h4{margin:0 0 6px 0}
+    .menu-item p{margin:0 0 10px 0;font-size:13px;color:var(--muted)}
+    .cart-item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #eee}
+    footer{margin-top:24px;text-align:center;color:var(--muted);font-size:13px}
+    .orders{display:flex;flex-direction:column;gap:8px}
+    .order-card{padding:10px;border-radius:8px;border:1px solid #eef2ff;background:white}
+    .top-actions{display:flex;gap:8px;align-items:center}
+    .hidden{display:none}
+    @media (max-width:1000px){
+      .grid{grid-template-columns:1fr;gap:12px}
+      .container{padding:0 12px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🍔 Food Delivery — Demo</h1>
+    <div class="top-actions">
+      <span id="userBadge" class="small">Not signed in</span>
+      <button id="btnLogout" class="btn ghost hidden">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <!-- LEFT: Auth & Cart -->
+      <aside>
+        <div class="card" id="authCard">
+          <h3 id="authTitle">Login</h3>
+          <div id="authForms">
+            <!-- Login form -->
+            <div id="loginForm">
+              <div class="field">
+                <label class="small">Email</label>
+                <input id="loginEmail" type="email" placeholder="you@example.com" />
+              </div>
+              <div class="field">
+                <label class="small">Password</label>
+                <input id="loginPassword" type="password" placeholder="password" />
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button id="btnLogin" class="btn">Login</button>
+                <button id="showRegister" class="btn ghost">Register</button>
+              </div>
+            </div>
+
+            <!-- Register form -->
+            <div id="registerForm" class="hidden">
+              <div class="field">
+                <label class="small">Name</label>
+                <input id="regName" type="text" placeholder="Your name" />
+              </div>
+              <div class="field">
+                <label class="small">Email</label>
+                <input id="regEmail" type="email" placeholder="you@example.com" />
+              </div>
+              <div class="field">
+                <label class="small">Password</label>
+                <input id="regPassword" type="password" placeholder="min 6 chars" />
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button id="btnRegister" class="btn">Create account</button>
+                <button id="showLogin" class="btn ghost">Back to login</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Your Cart</h3>
+          <div id="cartList" style="min-height:60px">
+            <div class="small" id="cartEmpty">Cart is empty</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+            <strong>Total: $<span id="cartTotal">0.00</span></strong>
+          </div>
+          <div style="margin-top:12px">
+            <div class="field">
+              <label class="small">Deliver to (address)</label>
+              <textarea id="address" rows="2" placeholder="Your delivery address"></textarea>
+            </div>
+            <button id="btnPlaceOrder" class="btn" style="width:100%">Place order</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MIDDLE: Restaurants + Menu -->
+      <section>
+        <div class="card" style="margin-bottom:14px;">
+          <h3>Restaurants</h3>
+          <div id="restaurants" class="list small">
+            <div>Loading restaurants...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 id="menuTitle">Menu</h3>
+          <div id="menu" class="menu small">
+            <div>Select a restaurant to see its menu</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Orders -->
+      <aside>
+        <div class="card">
+          <h3>Your Orders</h3>
+          <div id="orders" class="orders small">
+            <div class="small">Sign in to view your orders</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>Quick tips</h3>
+          <ul class="small" style="padding-left:16px;margin:8px 0">
+            <li>Seeded demo user: <code>cust@example.com</code> / password <code>password123</code></li>
+            <li>Seeded owner: <code>owner@example.com</code> (role: restaurant)</li>
+            <li>API: <code>http://localhost:5000/api</code> — change below if hosted elsewhere</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      Demo frontend built to work with your Node/Express backend (no payment, no images).
+    </footer>
+  </main>
+
+  <script>
+    // === Configuration ===
+    const API_BASE = 'http://localhost:5000/api'; // change if your backend runs elsewhere
+
+    // === State ===
+    let restaurants = [];
+    let selectedRestaurantId = null;
+    let menuItems = [];
+    let cart = []; // {menuItemId, name, price, qty, restaurantId}
+    const tokenKey = 'fd_demo_token';
+    const userKey = 'fd_demo_user';
+
+    // === Helpers ===
+    function $qs(sel, root=document) { return root.querySelector(sel); }
+    function $qsa(sel, root=document) { return Array.from(root.querySelectorAll(sel)); }
+    function setAuthToken(token) { if (token) localStorage.setItem(tokenKey, token); else localStorage.removeItem(tokenKey); }
+    function getAuthToken() { return localStorage.getItem(tokenKey); }
+    function setUser(user){ if(user) localStorage.setItem(userKey, JSON.stringify(user)); else localStorage.removeItem(userKey); }
+    function getUser(){ try{return JSON.parse(localStorage.getItem(userKey));}catch(e){return null;} }
+
+    // Generic fetch wrapper
+    async function api(url, opts = {}) {
+      const headers = opts.headers || {};
+      headers['Content-Type'] = 'application/json';
+      const token = getAuthToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      opts.headers = headers;
+      const res = await fetch(API_BASE + url, opts);
+      const text = await res.text();
+      // Try parse JSON if present
+      let data;
+      try { data = text ? JSON.parse(text) : null; } catch(e){ data = text; }
+      if (!res.ok) {
+        const message = (data && (data.msg || data.error || data.message)) || JSON.stringify(data) || 'Server error';
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    // === UI wiring ===
+    const userBadge = $qs('#userBadge');
+    const btnLogout = $qs('#btnLogout');
+    const authTitle = $qs('#authTitle');
+    const loginForm = $qs('#loginForm');
+    const registerForm = $qs('#registerForm');
+    const showRegister = $qs('#showRegister');
+    const showLogin = $qs('#showLogin');
+
+    // Auth actions
+    $qs('#btnLogin').addEventListener('click', async () => {
+      const email = $qs('#loginEmail').value.trim();
+      const password = $qs('#loginPassword').value;
+      try {
+        const r = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
+        setAuthToken(r.token);
+        await fetchProfileAndRefresh();
+        alert('Logged in');
+      } catch (err) { alert('Login failed: ' + err.message); }
+    });
+
+    $qs('#btnRegister').addEventListener('click', async () => {
+      const name = $qs('#regName').value.trim();
+      const email = $qs('#regEmail').value.trim();
+      const password = $qs('#regPassword').value;
+      try {
+        const r = await api('/auth/register', { method:'POST', body: JSON.stringify({ name, email, password }) });
+        setAuthToken(r.token);
+        await fetchProfileAndRefresh();
+        alert('Registered and logged in');
+      } catch (err) { alert('Register failed: ' + err.message); }
+    });
+
+    showRegister.addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      registerForm.classList.remove('hidden');
+      authTitle.textContent = 'Create account';
+    });
+    showLogin.addEventListener('click', () => {
+      registerForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      authTitle.textContent = 'Login';
+    });
+
+    btnLogout.addEventListener('click', () => {
+      setAuthToken(null);
+      setUser(null);
+      updateAuthUI();
+      loadOrdersUI();
+      alert('Logged out');
+    });
+
+    // Cart functions
+    function addToCart(item) {
+      // If cart has items from different restaurant, clear or ask — here we clear
+      if (cart.length > 0 && cart[0].restaurantId !== item.restaurantId) {
+        if (!confirm('Your cart contains items from another restaurant. Clear cart and add this item?')) return;
+        cart = [];
+      }
+      const existing = cart.find(ci => ci.menuItemId === item.menuItemId);
+      if (existing) existing.qty += 1;
+      else cart.push({ ...item, qty: 1 });
+      renderCart();
+    }
+    function changeQty(menuItemId, delta) {
+      const it = cart.find(c=>c.menuItemId===menuItemId);
+      if(!it) return;
+      it.qty += delta;
+      if(it.qty <= 0) cart = cart.filter(c=>c.menuItemId!==menuItemId);
+      renderCart();
+    }
+    function renderCart(){
+      const el = $qs('#cartList');
+      el.innerHTML = '';
+      if(cart.length===0){
+        $qs('#cartEmpty').classList.remove('hidden');
+        $qs('#cartTotal').textContent = '0.00';
+        return;
+      }
+      $qs('#cartEmpty').classList.add('hidden');
+      cart.forEach(ci => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div style="flex:1">
+            <div style="font-weight:600">${ci.name}</div>
+            <div class="small">${ci.qty} × $${ci.price.toFixed(2)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div>
+              <button class="btn ghost btn-dec" data-id="${ci.menuItemId}">-</button>
+              <button class="btn ghost btn-inc" data-id="${ci.menuItemId}">+</button>
+            </div>
+            <div style="font-weight:600">$${(ci.qty*ci.price).toFixed(2)}</div>
+          </div>
+        `;
+        el.appendChild(div);
+      });
+      $qsa('.btn-dec').forEach(b=>b.addEventListener('click', ()=>changeQty(b.dataset.id,-1)));
+      $qsa('.btn-inc').forEach(b=>b.addEventListener('click', ()=>changeQty(b.dataset.id,1)));
+      const total = cart.reduce((s,c)=>s + c.price * c.qty, 0);
+      $qs('#cartTotal').textContent = total.toFixed(2);
+    }
+
+    // Place order
+    $qs('#btnPlaceOrder').addEventListener('click', async () => {
+      const token = getAuthToken();
+      if (!token) { alert('Please log in to place orders'); return; }
+      if (cart.length === 0) { alert('Cart is empty'); return; }
+      const address = $qs('#address').value.trim();
+      if (!address) { alert('Enter delivery address'); return; }
+
+      // Prepare payload
+      const restaurantId = cart[0].restaurantId;
+      const items = cart.map(c => ({ menuItemId: c.menuItemId, qty: c.qty }));
+      try {
+        const res = await api('/orders', { method:'POST', body: JSON.stringify({ restaurantId, items, address }) });
+        alert('Order placed — id: ' + (res._id || res.id || 'unknown'));
+        cart = [];
+        renderCart();
+        loadOrdersUI();
+      } catch (err) { alert('Place order failed: ' + err.message); }
+    });
+
+    // Load restaurants
+    async function loadRestaurants(){
+      try {
+        const res = await api('/restaurants', { method:'GET' });
+        restaurants = res;
+        renderRestaurants();
+      } catch (err) {
+        $qs('#restaurants').innerHTML = '<div class="small">Failed to load restaurants: ' + err.message + '</div>';
+      }
+    }
+    function renderRestaurants(){
+      const el = $qs('#restaurants');
+      el.innerHTML = '';
+      if(restaurants.length===0){
+        el.innerHTML = '<div class="small">No restaurants found</div>'; return;
+      }
+      restaurants.forEach(r=>{
+        const d = document.createElement('div');
+        d.className = 'rest';
+        d.innerHTML = `
+          <div class="meta">
+            <h3>${escapeHtml(r.name)}</h3>
+            <div class="small">${escapeHtml(r.cuisine || '')} ${r.address ? '• ' + escapeHtml(r.address) : ''}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn ghost btn-view-menu" data-id="${r._id}">View menu</button>
+            <button class="btn" style="font-size:13px" onclick="openCreateRestaurant()">Open</button>
+          </div>
+        `;
+        el.appendChild(d);
+      });
+      $qsa('.btn-view-menu').forEach(b=>b.addEventListener('click', ()=>{ selectRestaurant(b.dataset.id); }));
+    }
+
+    // select restaurant and fetch menu
+    async function selectRestaurant(id){
+      selectedRestaurantId = id;
+      $qs('#menuTitle').textContent = 'Menu — Loading...';
+      try {
+        const menu = await api('/restaurants/' + id + '/menu', { method:'GET' });
+        menuItems = menu;
+        renderMenu();
+      } catch (err) {
+        $qs('#menu').innerHTML = '<div class="small">Failed to load menu: ' + err.message + '</div>';
+      }
+    }
+    function renderMenu(){
+      $qs('#menuTitle').textContent = `Menu — ${restaurants.find(r=>r._id===selectedRestaurantId)?.name || ''}`;
+      const mp = $qs('#menu');
+      mp.innerHTML = '';
+      if(!menuItems || menuItems.length===0){
+        mp.innerHTML = '<div class="small">No menu items</div>'; return;
+      }
+      menuItems.forEach(mi=>{
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+          <h4>${escapeHtml(mi.name)}</h4>
+          <p>${escapeHtml(mi.description || '')}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">$${(mi.price||0).toFixed(2)}</div>
+            <div>
+              <button class="btn ghost btn-add" data-id="${mi._id}">Add</button>
+            </div>
+          </div>
+        `;
+        mp.appendChild(div);
+      });
+      $qsa('.btn-add').forEach(b => {
+        b.addEventListener('click', () => {
+          const id = b.dataset.id;
+          const mi = menuItems.find(x=>x._id===id);
+          if(!mi) return;
+          addToCart({ menuItemId: mi._id, name: mi.name, price: mi.price, restaurantId: selectedRestaurantId });
+        });
+      });
+    }
+
+    // Orders UI
+    async function loadOrdersUI(){
+      const token = getAuthToken();
+      const ordersEl = $qs('#orders');
+      ordersEl.innerHTML = '';
+      if(!token){
+        ordersEl.innerHTML = '<div class="small">Sign in to view your orders</div>'; return;
+      }
+      try {
+        const orders = await api('/orders', { method:'GET' });
+        if(!orders || orders.length===0){
+          ordersEl.innerHTML = '<div class="small">No orders yet</div>'; return;
+        }
+        orders.forEach(o=>{
+          const d = document.createElement('div');
+          d.className = 'order-card';
+          d.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-weight:700">Order ${o._id ? o._id.slice(-6) : ''}</div>
+                <div class="small">${o.restaurant?.name || ''} • ${new Date(o.placedAt).toLocaleString()}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-weight:700">$${(o.totalPrice||0).toFixed(2)}</div>
+                <div class="small">Status: ${escapeHtml(o.status)}</div>
+              </div>
+            </div>
+          `;
+          ordersEl.appendChild(d);
+        });
+      } catch (err) {
+        ordersEl.innerHTML = '<div class="small">Failed to load orders: ' + err.message + '</div>';
+      }
+    }
+
+    // Fetch profile (user info) by hitting a protected endpoint (there isn't one in provided backend),
+    // so we'll attempt to decode token payload locally (note: token payload contains id only in your backend).
+    async function fetchProfileAndRefresh(){
+      const token = getAuthToken();
+      if(!token) return updateAuthUI();
+      try {
+        // try to decode token payload (unsafe, just for display)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userId = payload.id;
+        setUser({ id: userId });
+        updateAuthUI();
+        await loadOrdersUI();
+      } catch (err) {
+        console.warn('Failed to decode token', err);
+        setUser(null);
+        setAuthToken(null);
+        updateAuthUI();
+      }
+    }
+
+    function updateAuthUI(){
+      const user = getUser();
+      if(user && getAuthToken()){
+        userBadge.textContent = 'Signed in';
+        btnLogout.classList.remove('hidden');
+        $qs('#authCard').classList.add('hidden'); // hide auth card when logged in
+      } else {
+        userBadge.textContent = 'Not signed in';
+        btnLogout.classList.add('hidden');
+        $qs('#authCard').classList.remove('hidden');
+      }
+    }
+
+    // Utility: escape HTML
+    function escapeHtml(s){
+      if(!s && s !== 0) return '';
+      return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+    }
+
+    // Extra: open create restaurant placeholder
+    window.openCreateRestaurant = function(){
+      alert('Restaurant owner functionality (create/edit menu) is not implemented in this demo frontend.');
+    }
+
+    // Init
+    (async function init(){
+      updateAuthUI();
+      await loadRestaurants();
+      await fetchProfileAndRefresh();
+      await loadOrdersUI();
+      renderCart();
+    })();
+  </script>
+</body>
+</html>
